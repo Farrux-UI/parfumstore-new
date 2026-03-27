@@ -1,0 +1,149 @@
+---
+import { sanityClient } from '../lib/sanity';
+import imageUrlBuilder from '@sanity/image-url';
+
+import { useTranslations } from '../utils/i18n';
+
+const lang = Astro.currentLocale || 'az';
+const t = useTranslations(lang);
+
+const builder = imageUrlBuilder(sanityClient);
+function urlFor(source) {
+  return builder.image(source);
+}
+
+let sliderDocs = [];
+try {
+  // Fetch ALL heroSlider documents natively as requested (removes [0] limit)
+  sliderDocs = await sanityClient.fetch('*[_type == "heroSlider"]');
+} catch (error) {
+  console.error("Failed to fetch heroSlider:", error);
+}
+
+// FlatMap all slides across any documents they published into a single array
+let slides = sliderDocs.flatMap(doc => doc.slides || []);
+
+// Fallback slides if Sanity data is fully empty
+if (slides.length === 0) {
+  slides = [
+    {
+      title: t('hero.title'),
+      subtitle: t('hero.subtitle'),
+      buttonText: t('hero.btn'),
+      buttonUrl: "/catalog?brand=christian-richard",
+      desktopImage: null,
+      mobileImage: null
+    }
+  ];
+}
+---
+
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+<style>
+  /* Custom Swiper Pagination Dots Styling */
+  .swiper-pagination-bullet {
+    width: 10px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.4);
+    opacity: 1;
+    transition: all 0.5s ease;
+  }
+  .swiper-pagination-bullet-active {
+    background: #ffffff;
+    transform: scale(1.3);
+  }
+  
+  /* Custom Navigation Arrow Styling */
+  .swiper-button-next, .swiper-button-prev {
+    color: rgba(255,255,255,0.7);
+    transition: all 0.3s ease;
+  }
+  .swiper-button-next:hover, .swiper-button-prev:hover {
+    color: #ffffff;
+    transform: scale(1.1);
+  }
+  .swiper-button-next::after, .swiper-button-prev::after {
+    font-size: 24px;
+    font-weight: 300;
+  }
+</style>
+
+<div class="relative w-full h-[90vh] md:h-[100vh] overflow-hidden bg-[#0a0a0a]">
+  
+  <!-- Swiper Container -->
+  <div class="swiper hero-swiper w-full h-full">
+    <div class="swiper-wrapper">
+      
+      {slides.map((slide, index) => (
+        <div class="swiper-slide relative h-full w-full">
+          <!-- Background Images -->
+          <picture class="absolute inset-0 w-full h-full">
+            {slide.mobileImage && (
+              <source media="(max-width: 768px)" srcset={urlFor(slide.mobileImage).width(800).url()} />
+            )}
+            {slide.desktopImage ? (
+               <img 
+                 src={urlFor(slide.desktopImage).width(1920).url()} 
+                 alt={slide.title || "Hero Background"} 
+                 class="w-full h-full object-cover object-bottom"
+               />
+            ) : (
+              <div class="w-full h-full bg-[#f4f4f4] flex items-center justify-center object-bottom">
+                 <span class="text-black/20 uppercase tracking-widest text-xs">Panoramic Imagery Loaded</span>
+              </div>
+            )}
+          </picture>
+          
+
+          
+          <!-- Grounded Perfumes Placeholder alignment (mb-3px) is controlled physically by the image object-bottom attribute natively aligning to 0px -->
+        </div>
+      ))}
+      
+    </div>
+    
+    <!-- Carousel Controls -->
+    {slides.length > 1 && (
+      <>
+        <div class="swiper-pagination absolute bottom-10 z-[60]"></div>
+        <div class="swiper-button-prev ml-4 z-[60] hidden md:flex"></div>
+        <div class="swiper-button-next mr-4 z-[60] hidden md:flex"></div>
+      </>
+    )}
+  </div>
+</div>
+
+<!-- Swiper JS Script -->
+<script is:inline src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+<script is:inline>
+  // Removed DOMContentLoaded to guarantee immediate binding on load
+  if (typeof Swiper !== 'undefined') {
+    new Swiper('.hero-swiper', {
+      loop: true,
+      
+      autoplay: {
+        delay: 5000,
+        disableOnInteraction: false,
+      },
+      
+      speed: 1000,
+      effect: 'fade',
+      fadeEffect: {
+        crossFade: true
+      },
+      
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+      
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+    });
+  }
+</script>

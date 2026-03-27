@@ -1,0 +1,405 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ══════════════════════════════════════════════
+   CSS VARIABLES — Dual-theme color system
+   ══════════════════════════════════════════════ */
+:root {
+  --bg: #FFFFFF;
+  --text: #000000;
+  --text-muted: rgba(0, 0, 0, 0.60);
+  --btn-bg: linear-gradient(135deg, #4A1F1F 0%, #2D0A0A 50%, #1A0505 100%);
+  --btn-text: #FFFFFF;
+  --btn-hover: linear-gradient(135deg, #5c2626 0%, #3a0d0d 50%, #240707 100%);
+  --btn-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  --btn-border: rgba(45, 10, 10, 0.2);
+  --border: rgba(0, 0, 0, 0.12);
+  --border-hover: rgba(45, 10, 10, 0.35);
+  --accent: #2D0A0A;
+  --card-shadow: rgba(45, 10, 10, 0.15);
+}
+
+.dark {
+  --bg: #000000;
+  --text: #FFFFFF;
+  --text-muted: rgba(255, 255, 255, 0.55);
+  --btn-bg: linear-gradient(to bottom, #FFD073 0%, #FFB347 40%, #D49B3E 60%, #FFD073 100%);
+  --btn-text: #000000;
+  --btn-hover: linear-gradient(to bottom, #ffd98a 0%, #ffc060 40%, #e0ad52 60%, #ffd98a 100%);
+  --btn-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.5), inset 0 -1px 3px rgba(0, 0, 0, 0.3);
+  --btn-border: rgba(212, 155, 62, 0.6);
+  --border: rgba(255, 255, 255, 0.10);
+  --border-hover: rgba(255, 183, 71, 0.35);
+  --accent: #FFB347;
+  --card-shadow: rgba(255, 183, 71, 0.12);
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    font-family: 'Palatino Linotype', Palatino, Palladio, 'URW Palladio L', serif;
+    background-color: var(--bg);
+    color: var(--text);
+    @apply text-base transition-colors duration-700;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Palatino Linotype', Palatino, Palladio, 'URW Palladio L', serif;
+    color: var(--text);
+    @apply font-normal tracking-widest transition-colors duration-700;
+  }
+
+  p {
+    color: var(--text);
+    @apply leading-relaxed text-base md:text-lg transition-colors duration-700;
+  }
+
+  a {
+    color: var(--accent);
+    @apply transition-all duration-700;
+  }
+
+  a:hover {
+    opacity: 0.75;
+  }
+}
+
+@layer components {
+
+  /* ══════════════════════════════════════════════
+     NAVIGATION
+     ══════════════════════════════════════════════ */
+
+  .nav-link {
+    font-family: 'Palatino Linotype', Palatino, Palladio, serif;
+    opacity: 0.6;
+    @apply text-[#1a1a1a] dark:text-[#ffffff] text-xs font-normal tracking-[0.2em] uppercase transition-all duration-700;
+  }
+
+  .nav-link:hover {
+    @apply text-[#D97706] dark:text-[#FFB347];
+    opacity: 1;
+  }
+
+  .logo-badge {
+    transition: transform 0.7s ease, box-shadow 0.7s ease;
+  }
+
+  .logo-badge:hover {
+    transform: scale(1.05);
+  }
+
+  /* ══════════════════════════════════════════════
+     HERO SECTION
+     ══════════════════════════════════════════════ */
+
+  .hero-section {
+    @apply h-screen w-full flex items-center justify-center relative overflow-hidden;
+    background-color: #080808;
+  }
+
+  .hero-content {
+    @apply relative z-10 text-center;
+  }
+
+  .hero-video-bg {
+    @apply absolute inset-0;
+    background-image: url('/hero-macro.png');
+    background-size: cover;
+    background-position: center center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-color: #080808;
+    transition: transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .hero-section:hover .hero-video-bg {
+    transform: scale(1.03);
+  }
+
+  .hero-overlay {
+    @apply absolute inset-0;
+    background:
+      radial-gradient(ellipse 65% 55% at 50% 50%,
+        rgba(0, 0, 0, 0.40) 0%,
+        rgba(0, 0, 0, 0.55) 50%,
+        rgba(0, 0, 0, 0.72) 100%),
+      linear-gradient(to bottom,
+        rgba(0, 0, 0, 0.30) 0%,
+        rgba(0, 0, 0, 0.45) 40%,
+        rgba(0, 0, 0, 0.50) 60%,
+        rgba(0, 0, 0, 0.35) 100%);
+  }
+
+  .hero-title-primary {
+    font-family: 'Palatino Linotype', Palatino, Palladio, 'URW Palladio L', serif;
+    @apply text-5xl md:text-7xl lg:text-8xl font-normal uppercase leading-tight;
+    letter-spacing: 0.22em;
+    color: rgba(255, 255, 255, 0.93);
+    text-shadow: 0 2px 30px rgba(0, 0, 0, 0.5), 0 0 80px rgba(0, 0, 0, 0.3);
+    margin-bottom: 0.05em;
+  }
+
+  .hero-title-accent {
+    font-family: 'Palatino Linotype', Palatino, Palladio, 'URW Palladio L', serif;
+    @apply text-7xl md:text-9xl lg:text-[11rem] font-normal uppercase leading-none;
+    letter-spacing: 0.3em;
+    color: rgba(255, 255, 255, 0.96);
+    text-shadow: 0 2px 40px rgba(0, 0, 0, 0.6), 0 0 100px rgba(0, 0, 0, 0.35);
+    margin-bottom: 0.4em;
+  }
+
+  .hero-subtitle {
+    font-family: 'Palatino Linotype', Palatino, Palladio, serif;
+    @apply text-xs md:text-sm font-normal uppercase;
+    letter-spacing: 0.5em;
+    color: rgba(255, 255, 255, 0.70);
+    text-shadow: 0 1px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  /* ══════════════════════════════════════════════
+     PAGE TRANSITIONS
+     ══════════════════════════════════════════════ */
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* ══════════════════════════════════════════════
+     SECTION SPACING
+     ══════════════════════════════════════════════ */
+
+  .section-luxury {
+    background-color: var(--bg);
+    @apply py-20 md:py-28 lg:py-36 px-6 md:px-12 lg:px-20 xl:px-28 transition-colors duration-700;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-divider {
+    width: 4rem;
+    height: 1px;
+    background-color: var(--accent);
+    @apply mx-auto mb-16 md:mb-20 transition-colors duration-700;
+  }
+
+  /* ══════════════════════════════════════════════
+     SCENT CATEGORY CARDS
+     ══════════════════════════════════════════════ */
+
+  .scent-card {
+    border: 1px solid var(--border);
+    background: transparent;
+    @apply relative p-8 md:p-10 text-center transition-all duration-700 cursor-pointer;
+  }
+
+  .scent-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px var(--card-shadow);
+  }
+
+  .scent-card-icon {
+    color: var(--accent);
+    @apply w-20 h-20 mx-auto mb-8 flex items-center justify-center transition-all duration-500;
+  }
+
+  .group:hover .scent-card-icon {
+    transform: scale(1.08);
+  }
+
+  .scent-card-title {
+    font-family: 'Palatino Linotype', Palatino, Palladio, serif;
+    color: var(--text);
+    @apply text-lg md:text-xl font-normal tracking-widest uppercase mb-4 transition-colors duration-700;
+  }
+
+  .scent-card-desc {
+    font-family: 'Palatino Linotype', Palatino, Palladio, serif;
+    color: var(--text-muted);
+    @apply text-sm md:text-base leading-relaxed mb-8 transition-colors duration-700;
+  }
+
+  /* ══════════════════════════════════════════════
+     THEME BUTTONS — Dual-color via CSS vars
+     ══════════════════════════════════════════════ */
+
+  .btn-theme {
+    font-family: 'Palatino Linotype', Palatino, Palladio, serif;
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    box-shadow: var(--btn-shadow);
+    border: 1px solid var(--btn-border);
+    position: relative;
+    overflow: hidden;
+    @apply inline-block text-xs font-normal tracking-[0.2em] uppercase px-8 py-3.5 transition-all duration-700;
+  }
+
+  /* Reflection pseudo-element */
+  .btn-theme::before,
+  .btn-theme-lg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-25deg);
+    transition: left 0.7s ease;
+    pointer-events: none;
+  }
+
+  .btn-theme:hover::before,
+  .btn-theme-lg:hover::before {
+    left: 200%;
+  }
+
+  .btn-theme:hover {
+    background: var(--btn-hover);
+    color: var(--btn-text);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px var(--card-shadow), var(--btn-shadow);
+    opacity: 1;
+  }
+
+  /* Larger variant for section CTAs */
+  .btn-theme-lg {
+    font-family: 'Palatino Linotype', Palatino, Palladio, serif;
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    box-shadow: var(--btn-shadow);
+    border: 1px solid var(--btn-border);
+    position: relative;
+    overflow: hidden;
+    @apply inline-block text-sm font-normal tracking-[0.2em] uppercase px-12 py-4 transition-all duration-700;
+  }
+
+  .btn-theme-lg:hover {
+    background: var(--btn-hover);
+    color: var(--btn-text);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px var(--card-shadow), var(--btn-shadow);
+    opacity: 1;
+  }
+
+  /* ══════════════════════════════════════════════
+     PRODUCT CARDS
+     ══════════════════════════════════════════════ */
+
+  .product-card {
+    border: 1px solid var(--border);
+    @apply transition-all duration-700 cursor-pointer;
+  }
+
+  .product-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px var(--card-shadow);
+  }
+
+  .product-image {
+    background-color: var(--bg);
+    @apply aspect-[3/4] overflow-hidden flex items-center justify-center transition-all duration-700;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .product-title {
+    font-family: 'Palatino Linotype', Palatino, Palladio, serif;
+    color: var(--text);
+    @apply text-sm font-normal tracking-widest uppercase py-4 px-4 text-center transition-colors duration-700;
+  }
+
+  .product-price {
+    color: var(--accent);
+    @apply text-xs text-center pb-4 font-bold transition-colors duration-700;
+  }
+
+  /* ══════════════════════════════════════════════
+     PHILOSOPHY BLOCKS
+     ══════════════════════════════════════════════ */
+
+  .philosophy-block {
+    border: 1px solid var(--border);
+    @apply p-8 md:p-10 transition-all duration-700;
+  }
+
+  .philosophy-block:hover {
+    border-color: var(--border-hover);
+  }
+
+  .philosophy-number {
+    color: var(--accent);
+    font-family: 'Palatino Linotype', Palatino, Palladio, serif;
+    @apply text-5xl md:text-6xl font-normal mb-6 transition-colors duration-700;
+    opacity: 0.3;
+  }
+
+  .philosophy-title {
+    font-family: 'Palatino Linotype', Palatino, Palladio, serif;
+    color: var(--text);
+    @apply text-xl md:text-2xl font-normal tracking-widest uppercase mb-4 transition-colors duration-700;
+  }
+
+  .philosophy-text {
+    font-family: 'Palatino Linotype', Palatino, Palladio, serif;
+    color: var(--text-muted);
+    @apply text-sm md:text-base leading-relaxed transition-colors duration-700;
+  }
+
+  /* ══════════════════════════════════════════════
+     FOOTER / INFORMATION
+     ══════════════════════════════════════════════ */
+
+  .footer-heading {
+    font-family: 'Palatino Linotype', Palatino, Palladio, serif;
+    color: var(--text);
+    @apply text-xs tracking-widest uppercase font-normal mb-6 transition-colors duration-700;
+  }
+
+  .footer-text {
+    color: var(--text-muted);
+    @apply text-xs leading-relaxed transition-colors duration-700;
+  }
+
+  .footer-link {
+    color: var(--text-muted);
+    @apply text-xs transition-colors duration-700;
+  }
+
+  .footer-link:hover {
+    color: var(--accent);
+    opacity: 1;
+  }
+
+  .footer-input {
+    border-bottom: 1px solid var(--accent);
+    background: transparent;
+    color: var(--text);
+    @apply py-3 px-0 text-sm w-full focus:outline-none transition-all duration-700;
+  }
+
+  .footer-input::placeholder {
+    color: var(--text-muted);
+    @apply text-xs tracking-widest uppercase;
+  }
+}

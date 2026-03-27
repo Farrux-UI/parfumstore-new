@@ -1,0 +1,133 @@
+---
+import '../styles/global.css';
+import { sanityClient } from '../lib/sanity';
+import imageUrlBuilder from '@sanity/image-url';
+import Header from '../components/Header.astro';
+
+const builder = imageUrlBuilder(sanityClient);
+function urlFor(source) {
+  return builder.image(source);
+}
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'Parfumstore.az - Editorial Luxury' } = Astro.props;
+
+// Fetch brands from Sanity
+let brandsData = [];
+try {
+  brandsData = await sanityClient.fetch('*[_type == "brand"] { name, letter, logo } | order(name asc)');
+} catch (error) {
+  console.error("Failed to fetch brands from Sanity:", error);
+}
+
+// Group brands by their letter field from Sanity
+const brands = brandsData.reduce((acc, brand) => {
+  const letter = brand.letter || (brand.name ? brand.name.charAt(0).toUpperCase() : '');
+  if (!letter) return acc;
+  
+  const existing = acc.find(group => group.letter === letter);
+  if (existing) {
+    existing.brands.push(brand);
+  } else {
+    acc.push({ letter, brands: [brand] });
+  }
+  return acc;
+}, []).sort((a, b) => a.letter.localeCompare(b.letter));
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content="Parfumstore.az — Editorial luxury niche perfumes, exclusively in Baku. Curated fragrances for those who understand that true luxury whispers." />
+    <title>{title}</title>
+    
+    <!-- Google Fonts: Cormorant Garamond & Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+    <style is:global>
+      :root {
+        color-scheme: light dark;
+      }
+      
+      html.dark {
+        color-scheme: dark;
+      }
+    </style>
+    <script is:inline>
+      const theme = (() => {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+          return localStorage.getItem('theme');
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      })();
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    </script>
+  </head>
+  <body class="text-black dark:text-white transition-colors duration-700 pt-0">
+    <!-- Global Parallax Background -->
+    <div class="fixed inset-0 z-[-10] bg-[url('/background.png')] bg-cover bg-center bg-no-repeat transition-all duration-700 dark:brightness-[0.3] dark:contrast-[1.2]"></div>
+    <div class="fixed inset-0 z-[-9] bg-[#FDFBF7]/80 dark:bg-[#0a0a0a]/80 transition-all duration-700 pointer-events-none"></div>
+
+    <Header />
+
+    <!-- Main Content -->
+    <main>
+      <slot />
+    </main>
+
+    <script>
+      // Header background effect on scroll
+      const navbar = document.getElementById('navbar');
+      let lastScrollY = 0;
+
+      window.addEventListener('scroll', () => {
+        lastScrollY = window.scrollY;
+        
+        if (lastScrollY > 50) {
+          navbar.classList.remove('dark:bg-transparent', 'dark:border-transparent');
+          navbar.classList.add('dark:bg-[#0a0a0a]/95', 'dark:backdrop-blur-md', 'dark:border-white/10', 'shadow-sm');
+        } else {
+          navbar.classList.add('dark:bg-transparent', 'dark:border-transparent');
+          navbar.classList.remove('dark:bg-[#0a0a0a]/95', 'dark:backdrop-blur-md', 'dark:border-white/10', 'shadow-sm');
+        }
+      }, { passive: true });
+
+      // Language Switcher Logic
+      const langButtons = document.querySelectorAll('[data-lang]');
+
+      langButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const newLang = btn.getAttribute('data-lang');
+          let path = window.location.pathname;
+          
+          // Remove current language prefix if present
+          if (path.startsWith('/ru/') || path === '/ru') {
+            path = path.replace(/^\/ru/, '');
+          } else if (path.startsWith('/en/') || path === '/en') {
+            path = path.replace(/^\/en/, '');
+          }
+          if (path === '') path = '/';
+          
+          // Redirect to new path
+          if (newLang === 'az') {
+            window.location.href = path; // Default locale has no prefix
+          } else {
+            window.location.href = `/${newLang}${path === '/' ? '' : path}`;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,475 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { useTranslations } from '../../../utils/i18n';
+import { sanityClient } from '../../../lib/sanity';
+import imageUrlBuilder from '@sanity/image-url';
+
+export async function getStaticPaths() {
+  const brands = await sanityClient.fetch('*[_type == "brand" && defined(slug.current)] { name, slug }');
+  const locales = ['ru', 'en'];
+  return locales.flatMap((lang) => 
+    brands.map((brand) => ({
+      params: { lang, slug: brand.slug.current },
+    }))
+  );
+}
+
+const { slug, lang } = Astro.params;
+const t = useTranslations(lang);
+
+const builder = imageUrlBuilder(sanityClient);
+function urlFor(source) {
+  return builder.image(source);
+}
+
+const query = `
+  *[_type == "brand" && slug.current == $slug][0]{
+    name,
+    logo,
+    description,
+    "products": *[_type == "product" && (brand._ref == ^._id || name match ^.name + "*")] | order(name asc) {
+      name,
+      slug,
+      logo,
+      imageHover,
+      bottomOffset,
+      price,
+      gender
+    }
+  }
+`;
+
+let brandData = null;
+try {
+  brandData = await sanityClient.fetch(query, { slug });
+} catch (error) {
+  console.error("Failed to fetch brand data:", error);
+}
+
+if (!brandData) {
+  return new Response(null, { status: 404, statusText: 'Not found' });
+}
+
+const { name, logo, products } = brandData;
+
+// ═══ DEDUPLICATE by name ═══
+const seen = new Set<string>();
+const unique = (products || []).filter((p: any) => {
+  const key = p.name.toLowerCase().trim();
+  if (seen.has(key)) return false;
+  seen.add(key);
+  return true;
+});
+
+const PER_PAGE = 15;
+---
+
+<Layout title={`${name} - Parfumstore.az`}>
+  <div class="studio-bg">
+    
+    <!-- STUDIO HEADER -->
+    <header class="studio-hdr">
+      <nav class="studio-nav">
+        <a href={`/${lang}/`}>{t('nav.home') || 'Ana səhifə'}</a>
+        <span>/</span>
+        <a href={`/${lang}/catalog`}>{t('nav.catalog') || 'Kataloq'}</a>
+        <span>/</span>
+        <em>{name}</em>
+      </nav>
+      {logo && <img src={urlFor(logo).width(200).url()} alt={name} class="studio-logo" />}
+      <h1 class="studio-brand">{name}</h1>
+    </header>
+
+    <!-- PRODUCT GRID -->
+    <main class="studio-main">
+      <!-- GENDER FILTER -->
+      <div class="gender-filter">
+        <button class="filter-btn active" data-filter="all">{t('filter.all') || 'All'}</button>
+        <button class="filter-btn" data-filter="Женский">{t('filter.female') || 'For Women'}</button>
+        <button class="filter-btn" data-filter="Мужской">{t('filter.male') || 'For Men'}</button>
+        <button class="filter-btn" data-filter="Унисекс">{t('filter.unisex') || 'Unisex'}</button>
+      </div>
+
+      <div class="studio-grid" id="productGrid">
+        {unique.map((p: any) => (
+          <a 
+            href={`/${lang}/product/${p.slug.current}`} 
+            class={`brand-product-card ${p.imageHover ? 'has-hover' : ''}`}
+            data-gender={p.gender || 'all'}
+          >
+            <div class="product-img-wrap" style={`--offset: ${p.bottomOffset || 0}px;`}>
+              {p.logo ? (
+                <>
+                  <img
+                    src={urlFor(p.logo).width(500).url()}
+                    alt={p.name}
+                    class="product-img bottle-main"
+                    loading="lazy"
+                  />
+                  {p.imageHover && (
+                    <img
+                      src={urlFor(p.imageHover).width(500).url()}
+                      alt={`${p.name} Hover`}
+                      class="product-img bottle-hover"
+                      loading="lazy"
+                    />
+                  )}
+                </>
+              ) : (
+                <span class="product-empty">—</span>
+              )}
+            </div>
+            
+            <div class="product-info">
+              <span class="product-name">{p.name}</span>
+              {p.price && <span class="product-price">{p.price} ₼</span>}
+            </div>
+          </a>
+        ))}
+      </div>
+
+      <nav class="pager" id="pagination" style="display: none;">
+        <button class="pg" id="pgPrev">{t('nav.prev') || 'Əvvəlki'}</button>
+        <div id="pageNumbers" class="flex gap-2"></div>
+        <button class="pg" id="pgNext">{t('nav.next') || 'Növbəti'}</button>
+      </nav>
+    </main>
+
+  </div>
+</Layout>
+
+<style>
+  /* ═══════════════════════════════════════════════════════
+     STUDIO MINIMALIST GRID ARCHITECTURE
+     ═══════════════════════════════════════════════════════ */
+
+  .studio-bg {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    transition: background 0.7s ease, color 0.7s ease;
+  }
+  :global(.dark) .studio-bg {
+    background: radial-gradient(circle at top center, #181818 0%, #0a0a0a 100%);
+  }
+
+  /* ── Simple Floating Header ── */
+  .studio-hdr {
+    padding: 6rem 1rem 4rem;
+    text-align: center;
+  }
+  .studio-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 2rem;
+    font: 600 11px/1 sans-serif;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+  }
+  .studio-nav a { color: var(--text); text-decoration: none; opacity: .9; transition: color .3s; }
+  .studio-nav a:hover { color: var(--accent); }
+  .studio-nav span { color: var(--text); opacity: .5; }
+  .studio-nav em { color: var(--accent); font-style: normal; opacity: 1; }
+  
+  .studio-logo {
+    display: block;
+    width: 50px; height: 50px;
+    margin: 0 auto 1.5rem;
+    object-fit: contain;
+    opacity: .8;
+    transition: filter 0.7s ease;
+  }
+  :global(.dark) .studio-logo {
+    filter: invert(1) brightness(1.5);
+  }
+
+  .studio-brand {
+    font: 1.5rem/1.2 'Cormorant Garamond', Georgia, serif;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: var(--text);
+    margin: 0;
+  }
+
+  /* ── Gender Filter ── */
+  .gender-filter {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 4rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+    opacity: 0.9;
+  }
+  .filter-btn {
+    background: none;
+    border: none;
+    color: var(--text);
+    font: 600 10px sans-serif;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: all 0.3s ease;
+    padding: 0 0 4px 0;
+    position: relative;
+  }
+  .filter-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 1px;
+    background: var(--accent);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+  }
+  .filter-btn:hover {
+    opacity: 0.7;
+  }
+  .filter-btn.active {
+    opacity: 1;
+    color: var(--accent);
+  }
+  .filter-btn.active::after {
+    width: 100%;
+  }
+
+  /* ── Studio Grid ── */
+  .studio-main {
+    flex: 1;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 2rem 5rem;
+    box-sizing: border-box;
+  }
+
+  .studio-grid {
+    display: grid;
+    /* CSS Grid: 5 columns desktop */
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3rem 1.5rem;
+  }
+
+  /* ── Product Card Layout ── */
+  .brand-product-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    text-decoration: none;
+    height: auto; /* Dynamic height adapted to precisely square inner wrapper */
+    padding: 0;
+    box-sizing: border-box;
+    border: none;
+    outline: none;
+    background: transparent;
+  }
+
+  /* The Square Cell Container */
+  .product-img-wrap {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* Pure 1:1 deterministic bounding box */
+    display: flex;
+    align-items: flex-end; /* Grounding gravity */
+    justify-content: center;
+    position: relative;
+    padding-bottom: 0px; 
+    margin-bottom: 1.5rem; /* Gap between bottle block and text */
+  }
+
+  .product-img {
+    width: 100%;
+    height: 100%;
+    max-height: 100%; 
+    object-fit: contain;
+    object-position: center; /* Uniformly centered without distortion */
+    filter: drop-shadow(0 20px 20px rgba(0,0,0,0.4)); /* Grounded base shadow directly tracking object mass */
+    transform: translateY(var(--offset, 0px)); /* Apply manual Sanity CMS override safely */
+    transition: transform 0.4s cubic-bezier(.25,.46,.45,.94), filter 0.4s ease, opacity 0.3s ease-in-out;
+  }
+
+  .bottle-main {
+    position: relative;
+    z-index: 2;
+  }
+  
+  .bottle-hover {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    z-index: 3;
+    opacity: 0;
+  }
+
+  .brand-product-card:hover .product-img {
+    transform: scale(1.05) translateY(calc(var(--offset, 0px) - 2px)); /* Seamless pulse scale preserving offset */
+    filter: drop-shadow(0 30px 25px rgba(0,0,0,0.6)); /* Intense grounded shadow decoupling boxy halo forms */
+  }
+
+  /* ── Hover Image Switch Logic ── */
+  .brand-product-card.has-hover:hover .bottle-main {
+    opacity: 0;
+  }
+  .brand-product-card.has-hover:hover .bottle-hover {
+    opacity: 1;
+  }
+
+  .product-empty {
+    color: var(--text); opacity: .1; font-size: 14px;
+  }
+
+  .product-info {
+    text-align: center;
+    height: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .product-name {
+    font: 13px/1.4 'Cormorant Garamond', Georgia, serif;
+    letter-spacing: .05em;
+    color: var(--text);
+    opacity: .9;
+    transition: color .3s;
+  }
+  .brand-product-card:hover .product-name { color: var(--accent); }
+
+  .product-price {
+    font: 11px/1.2 sans-serif;
+    letter-spacing: .1em;
+    color: var(--accent);
+    opacity: .75;
+    margin-top: 4px;
+  }
+
+  /* ── Pagination ── */
+  .pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 5rem;
+  }
+  .pg {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font: 11px/1 sans-serif;
+    letter-spacing: .1em;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all .3s;
+    text-transform: uppercase;
+  }
+  .pg:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .pg:disabled { opacity: .3; cursor: default; }
+  .pg.pg-on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+  @media (max-width: 479px) {
+    .studio-hdr { padding: 4rem 1rem 2rem; }
+    .studio-brand { font-size: 1.1rem; }
+    .studio-main { padding: 0 1rem 3rem; }
+    
+    /* 2 columns mobile */
+    .studio-grid { grid-template-columns: repeat(2, 1fr); gap: 2rem 0.5rem; }
+    
+    .product-name { font-size: 10px; }
+    .product-price { font-size: 9px; }
+  }
+
+  @media (min-width: 480px) and (max-width: 767px) {
+    .studio-hdr { padding: 5rem 1rem 3rem; }
+    .studio-main { padding: 0 1rem 4rem; }
+    
+    .studio-grid { grid-template-columns: repeat(3, 1fr); gap: 2.5rem 1rem; }
+    .product-name { font-size: 11px; }
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .studio-grid { grid-template-columns: repeat(3, 1fr); gap: 3rem 1.5rem; }
+  }
+
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    .studio-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+
+<script define:vars={{ PER_PAGE }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const grid = document.getElementById('productGrid');
+    const cards = Array.from(grid.querySelectorAll('.brand-product-card'));
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const pgPrev = document.getElementById('pgPrev');
+    const pgNext = document.getElementById('pgNext');
+    const pageNumbers = document.getElementById('pageNumbers');
+    const pagination = document.getElementById('pagination');
+
+    let currentFilter = 'all';
+    let currentPage = 0;
+    let filteredCards = [...cards];
+
+    function update() {
+      // Filter
+      filteredCards = cards.filter(card => {
+        if (currentFilter === 'all') return true;
+        return card.getAttribute('data-gender') === currentFilter;
+      });
+
+      const totalPages = Math.ceil(filteredCards.length / PER_PAGE);
+      if (currentPage >= totalPages) currentPage = Math.max(0, totalPages - 1);
+
+      // Hide all
+      cards.forEach(c => c.style.display = 'none');
+
+      // Show current page
+      const start = currentPage * PER_PAGE;
+      const end = start + PER_PAGE;
+      filteredCards.slice(start, end).forEach(c => c.style.display = 'flex');
+
+      // Update Pagination UI
+      if (totalPages > 1) {
+        pagination.style.display = 'flex';
+        pageNumbers.innerHTML = '';
+        for (let i = 0; i < totalPages; i++) {
+          const btn = document.createElement('button');
+          btn.className = `pg ${i === currentPage ? 'pg-on' : ''}`;
+          btn.textContent = (i + 1).toString();
+          btn.onclick = () => {
+            currentPage = i;
+            update();
+            window.scrollTo({ top: grid.offsetTop - 200, behavior: 'smooth' });
+          };
+          pageNumbers.appendChild(btn);
+        }
+        pgPrev.disabled = currentPage === 0;
+        pgNext.disabled = currentPage === totalPages - 1;
+      } else {
+        pagination.style.display = 'none';
+      }
+    }
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.getAttribute('data-filter');
+        currentPage = 0;
+        update();
+      });
+    });
+
+    pgPrev.onclick = () => { if (currentPage > 0) { currentPage--; update(); } };
+    pgNext.onclick = () => { if (currentPage < Math.ceil(filteredCards.length / PER_PAGE) - 1) { currentPage++; update(); } };
+
+    // Initial run
+    update();
+  });
+</script>

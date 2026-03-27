@@ -1,0 +1,115 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { sanityClient } from '../../../lib/sanity';
+import imageUrlBuilder from '@sanity/image-url';
+import { useTranslations } from '../../../utils/i18n';
+
+export async function getStaticPaths() {
+  return [
+    { params: { lang: 'en' } },
+    { params: { lang: 'ru' } },
+    { params: { lang: 'az' } },
+  ];
+}
+
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+
+const builder = imageUrlBuilder(sanityClient);
+function urlFor(source) {
+  if (!source) return '';
+  return builder.image(source);
+}
+
+// Build-time fetch for Brands
+let brandsData = [];
+try {
+  brandsData = await sanityClient.fetch('*[_type == "brand"] { name, slug } | order(name asc)');
+} catch (error) { console.error(error); }
+
+const groupedBrands = brandsData.reduce((acc, b) => {
+  const l = b.name ? b.name.charAt(0).toUpperCase() : '';
+  if (!l) return acc;
+  const existing = acc.find(g => g.letter === l);
+  if (existing) existing.brands.push(b);
+  else acc.push({ letter: l, brands: [b] });
+  return acc;
+}, []).sort((a, b) => a.letter.localeCompare(b.letter));
+---
+
+<Layout title={`Parfumstore.az - ${t('nav.catalog')}`}>
+  <div class="animate-fade-in">
+    <div class="h-32"></div>
+
+    <section class="section-luxury pt-6 md:pt-8" style="background: transparent; min-height: 80vh;">
+      <div class="max-w-6xl mx-auto px-6 py-8 flex flex-col lg:flex-row gap-8 lg:gap-12">
+        
+        <!-- Sidebar Filter (Gender Only) -->
+        <aside class="w-full lg:w-1/4 flex-shrink-0">
+          <div class="sticky top-32 p-6 bg-white/50 dark:bg-[#0a0a0a]/80 backdrop-blur-md rounded-sm border border-black/5 dark:border-white/10 shadow-xl transition-all duration-700">
+            <h2 class="text-[10px] md:text-xs font-serif uppercase tracking-[0.25em] mb-6 border-b border-black/10 dark:border-white/10 pb-4 text-[#31251c] dark:text-[#d4af37]">
+              {t('catalog.filters')}
+            </h2>
+            <div class="space-y-8 font-sans font-light">
+              <div>
+                <h3 class="text-[9px] md:text-[10px] font-serif uppercase tracking-[0.2em] mb-4 opacity-70 text-[#31251c] dark:text-[#E6D5C3]">
+                   {t('catalog.gender')}
+                </h3>
+                <div class="flex flex-col gap-3">
+                   {['Мужской', 'Женский', 'Унисекс'].map(g => (
+                     <label class="flex items-start gap-3 cursor-pointer group">
+                       <input type="checkbox" class="peer hidden filter-input" value={g} />
+                       <div class="w-3.5 h-3.5 mt-0.5 border border-black/20 dark:border-white/20 rounded-sm peer-checked:bg-[#d4af37] transition-all flex items-center justify-center shrink-0">
+                         <svg class="w-2.5 h-2.5 text-black opacity-0 peer-checked:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                       </div>
+                       <span class="text-[10px] md:text-[11px] uppercase tracking-widest text-gray-500 group-hover:text-[#d4af37] leading-tight transition-colors">
+                         {g === 'Мужской' ? t('catalog.male') : (g === 'Женский' ? t('catalog.female') : t('catalog.unisex'))}
+                       </span>
+                     </label>
+                   ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="flex-grow w-full lg:w-3/4 pt-1">
+           <div class="flex flex-col border-b border-black/10 dark:border-white/10 pb-5 mb-10">
+             <div class="flex items-center justify-between gap-4">
+               <h1 class="text-xl md:text-3xl font-serif tracking-[0.15em] uppercase text-[#31251c] dark:text-[#E6D5C3]">
+                  {t('catalog.title')}
+               </h1>
+               
+               <!-- REVERTED TO NAVIGATION LINK (Separated Route Strategy) -->
+               <a 
+                 href={`/${lang}/catalog/find-your-scent`}
+                 class="bg-black dark:bg-[#d4af37]/10 border border-[#d4af37] text-[#d4af37] px-6 py-2.5 text-[10px] tracking-[0.2em] uppercase transition-all hover:bg-[#d4af37] hover:text-black rounded-sm font-sans font-bold shadow-[0_0_10px_rgba(212,175,55,0.1)] block"
+               >
+                  {t('catalog.findScent')}
+               </a>
+             </div>
+             <div class="mt-4 flex items-center gap-4 text-[9px] md:text-[10px] tracking-[0.3em] uppercase opacity-40 dark:text-[#d4af37]/60">
+                <span>{t('catalog.alphabetIndex')}</span>
+                <div class="h-[1px] flex-grow bg-black/10 dark:bg-white/10"></div>
+             </div>
+           </div>
+
+           <!-- Original Alphabetical Brand Directory -->
+           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-12 animate-fade-in">
+              {groupedBrands.map((group) => (
+                 <div class="flex flex-col group/brand">
+                   <h2 class="text-xl md:text-2xl font-serif text-[#8a0303] dark:text-[#d4af37] border-b border-black/10 dark:border-white/10 mb-5 pb-2 uppercase tracking-widest pl-0.5 group-hover/brand:pl-2 transition-all duration-700">{group.letter}</h2>
+                   <ul class="flex flex-col gap-2">
+                     {group.brands.map((b) => (
+                       <li><a href={`/${lang}/brand/${b.slug?.current}`} class="font-sans text-[12px] md:text-[13px] font-light tracking-[0.05em] text-gray-700 dark:text-[#E6D5C3] hover:text-[#d4af37] transition-all duration-500 block transform hover:translate-x-1">{b.name}</a></li>
+                     ))}
+                   </ul>
+                 </div>
+              ))}
+           </div>
+        </main>
+      </div>
+    </section>
+  </div>
+</Layout>

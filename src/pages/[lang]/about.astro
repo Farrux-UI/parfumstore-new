@@ -1,0 +1,134 @@
+---
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'ru' } },
+    { params: { lang: 'en' } }
+  ];
+}
+
+import Layout from '../../layouts/Layout.astro';
+import { useTranslations } from '../../utils/i18n';
+import { sanityClient } from '../../lib/sanity';
+import imageUrlBuilder from '@sanity/image-url';
+
+const lang = Astro.currentLocale || 'az';
+const t = useTranslations(lang);
+
+const builder = imageUrlBuilder(sanityClient);
+function urlFor(source) {
+  return builder.image(source);
+}
+
+const query = `
+  *[_type == "aboutPage"][0]{
+    content,
+    stores,
+    facebookUrl,
+    photos
+  }
+`;
+
+let aboutData = null;
+try {
+  aboutData = await sanityClient.fetch(query);
+} catch (error) {
+  console.error("Failed to fetch aboutPage data:", error);
+}
+
+// Retrieve localized content
+const mainContent = aboutData?.content?.[lang] || aboutData?.content?.az || [];
+const stores = aboutData?.stores || [];
+const fbUrl = aboutData?.facebookUrl || "#";
+const photos = aboutData?.photos || [];
+---
+
+<Layout title={`Parfumstore.az - ${t('nav.about')}`}>
+  <div class="animate-fade-in bg-[#fdfdfd] dark:bg-[#0b0b0b] transition-colors duration-500 min-h-screen">
+    <div class="pt-32 pb-24">
+      
+      <!-- Wider Centered Container for Grid -->
+      <div class="max-w-7xl mx-auto px-6 lg:px-12 py-12">
+        
+        <h1 class="text-3xl md:text-5xl font-medium tracking-[0.2em] uppercase text-center md:text-left mb-16 opacity-90 font-serif tracking-wide">
+          {t('home.about')}
+        </h1>
+
+        <div class="md:grid md:grid-cols-[2fr,1fr] md:gap-16 lg:gap-24 items-start">
+          
+          <!-- LEFT COLUMN: Narrative & Locations -->
+          <div>
+            <!-- Content Area -->
+            <article class="text-sm md:text-base leading-relaxed text-gray-800 dark:text-gray-300 mb-20 space-y-6 opacity-90 tracking-wide font-sans font-light leading-relaxed">
+              {mainContent.length > 0 ? (
+                mainContent.map((block) => {
+                  if (block._type !== 'block' || !block.children) return null;
+                  return <p class="mb-6 last:mb-0">{block.children.map(c => c.text).join('')}</p>;
+                })
+              ) : (
+                <>
+                  <p class="mb-6">{t('home.about_p1')}</p>
+                  <p class="mb-6">{t('home.about_p2')}</p>
+                  <p>{t('home.about_p3')}</p>
+                </>
+              )}
+            </article>
+            
+            <!-- Stores Matrix -->
+            {stores.length > 0 && (
+              <div class="border-t border-black/10 dark:border-white/10 pt-16 mb-16">
+                <h2 class="text-xl md:text-2xl font-medium tracking-[0.2em] uppercase mb-12 opacity-90 font-serif tracking-wide">
+                  {lang === 'az' ? 'Məkanlarımız' : lang === 'ru' ? 'Наши Локации' : 'Our Locations'}
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-12">
+                  {stores.map(store => {
+                    const locTitle = store.locationTitle?.[lang] || store.locationTitle?.az || "Store";
+                    const addr = store.address?.[lang] || store.address?.az || "";
+                    const hours = store.workingHours?.[lang] || store.workingHours?.az || "";
+                    return (
+                      <div>
+                        <h3 class="text-xs tracking-[0.25em] uppercase text-[#D97706] mb-4">{locTitle}</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-2 opacity-80">{addr}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 tracking-wider uppercase">{hours}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            <!-- Minimalist Underlined Link -->
+            {fbUrl !== "#" && (
+               <div class="pt-4 pb-12 md:pb-0">
+                  <a href={fbUrl} target="_blank" rel="noopener noreferrer" class="text-xs uppercase tracking-[0.2em] text-gray-700 dark:text-gray-300 font-medium hover:text-[#D97706] dark:hover:text-[#D97706] border-b border-black/20 dark:border-white/20 hover:border-[#D97706] transition-colors pb-1 inline-block">
+                     {lang === 'az' ? 'Bizi Facebook-da izləyin' : lang === 'ru' ? 'Следите за нами на Facebook' : 'Follow Us on Facebook'}
+                  </a>
+               </div>
+            )}
+          </div>
+          
+          <!-- RIGHT COLUMN: Editorial Photos -->
+          <div class="flex flex-col gap-8 md:gap-12 w-full mt-4 md:mt-0">
+             {photos.length > 0 ? (
+               photos.map((photo) => (
+                 <div class="w-full aspect-[4/5] bg-gray-50 dark:bg-[#111] overflow-hidden border border-black/5 dark:border-white/5 shadow-sm rounded-sm transition-transform duration-700 hover:-translate-y-1">
+                   <img 
+                      src={urlFor(photo).width(800).url()} 
+                      alt="Parfumstore Editorial" 
+                      class="w-full h-full object-cover opacity-95 transition-opacity duration-500 hover:opacity-100"
+                   />
+                 </div>
+               ))
+             ) : (
+               <div class="w-full aspect-[4/5] bg-gray-50 dark:bg-[#111] border border-black/5 dark:border-white/5 flex items-center justify-center rounded-sm">
+                  <p class="text-[10px] uppercase tracking-widest text-[#D97706] opacity-60">
+                    Awaiting Photos
+                  </p>
+               </div>
+             )}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,158 @@
+---
+import { sanityClient } from '../lib/sanity';
+import imageUrlBuilder from '@sanity/image-url';
+import ThemeToggle from './ThemeToggle.astro';
+import { useTranslations } from '../utils/i18n';
+
+const lang = Astro.currentLocale || 'az';
+const t = useTranslations(lang);
+
+const builder = imageUrlBuilder(sanityClient);
+function urlFor(source) {
+  return builder.image(source);
+}
+
+let brandsData = [];
+try {
+  brandsData = await sanityClient.fetch('*[_type == "brand"] { name, letter, logo, slug } | order(name asc)');
+} catch (error) {
+  console.error(error);
+}
+
+const brands = brandsData.reduce((acc, brand) => {
+  const letter = brand.letter || (brand.name ? brand.name.charAt(0).toUpperCase() : '');
+  if (!letter) return acc;
+  const existing = acc.find(group => group.letter === letter);
+  if (existing) { existing.brands.push(brand); } 
+  else { acc.push({ letter, brands: [brand] }); }
+  return acc;
+}, []).sort((a, b) => a.letter.localeCompare(b.letter));
+let headerData = null;
+try {
+  headerData = await sanityClient.fetch('*[_type == "headerSettings"][0]');
+} catch (error) {
+  console.error("Failed to fetch header nav data:", error);
+}
+
+// Map the clean, non-redundant translation payload exactly as requested
+const navigationItems = headerData?.navigationItems || [
+  { itemName: t('nav.about') || 'ABOUT', itemLink: '/#about' },
+  { itemName: t('nav.catalog') || 'CATALOG', itemLink: '/catalog' },
+  { itemName: t('nav.order') || 'ORDER', itemLink: '/#order' },
+  { itemName: t('nav.contact') || 'CONTACT', itemLink: '/#contact' }
+];
+
+---
+<!-- Image Layer: Header Canvas (Top Block) -->
+<div class="w-full h-[80px] md:h-[90px] bg-[#F0E6D8] dark:bg-[#151210] flex items-center justify-center relative z-[110] overflow-visible" style="background-image: url('/background.png'); background-size: cover; background-position: center top;">
+  <a href="/" class="flex items-center justify-center h-full relative z-[120]">
+    <img src="/pas.png" alt="PAS Logo" class="h-[100px] md:h-[115px] w-auto object-contain relative z-[120]" />
+  </a>
+</div>
+
+<!-- Independence Fix: Solid Navigation Menu Layer (Separate Bottom Block) -->
+<div id="navbar" class="w-full h-[40px] md:h-[48px] px-6 md:px-12 flex flex-col md:flex-row items-center justify-between bg-[#FDFBF7] dark:bg-[#121212] text-[#31251c] dark:text-[#E6D5C3] border-b border-[#eaeaea] dark:border-white/5 sticky top-0 z-[100] shadow-[0_4px_10px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_15px_rgba(212,175,55,0.1)] transition-shadow duration-300">
+    
+    <!-- Left Balance Spacer -->
+    <div class="w-full md:w-48 hidden md:block"></div>
+
+    <!-- Centered Navigation Links -->
+    <nav class="flex-1 flex items-center justify-center gap-8 md:gap-14 font-serif text-[12px] md:text-sm tracking-[0.15em] uppercase z-[100] h-[48px] relative">
+      {navigationItems.map((item) => {
+         let link = item.itemLink;
+         // Aggressive intercept: If the slug contains "about" or "catalog", hijack it with i18n logic
+         if (link && link.includes('about')) {
+           link = lang === 'az' ? '/about' : `/${lang}/about`;
+         }
+         if (link && link.includes('catalog')) {
+           link = lang === 'az' ? '/catalog' : `/${lang}/catalog`;
+         }
+         
+         const isCatalog = link && link.includes('catalog');
+
+         return isCatalog ? (
+           <div class="group h-full flex items-center cursor-pointer">
+             <a href={link} class="relative z-[250] hover:opacity-60 transition-opacity flex items-center h-full duration-300 m-0 leading-none whitespace-nowrap">
+               {item.itemName}
+             </a>
+             
+             <!-- Extensive Multi-Column Hover Grid Menu -->
+             <div class="absolute left-1/2 transform -translate-x-1/2 w-max max-w-[95vw] mt-[24px] top-1/2 bg-[#FDFBF7] dark:bg-[#0b0b0b] border border-[#eaeaea] dark:border-white/5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 shadow-[0_15px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_15px_40px_rgba(212,175,55,0.05)] z-[200] p-10 before:absolute before:inset-x-0 before:-top-10 before:h-12 before:bg-transparent">
+               <h3 class="text-xs font-sans tracking-[0.3em] uppercase text-gray-400 mb-8 border-b border-black/5 dark:border-white/5 pb-4 text-center">
+                 Perfume Houses
+               </h3>
+               <!-- Multi-Column Letter Layout as requested -->
+               <div class="grid grid-cols-2 lg:grid-cols-5 gap-x-12 gap-y-10 max-h-[60vh] overflow-y-auto w-full px-4 pt-2 pb-6 custom-scrollbar">
+                 {brands.map((group) => (
+                   <div class="flex flex-col break-inside-avoid">
+                     <h4 class="text-xs md:text-sm text-[#8a0303] dark:text-[#D97706] font-serif border-b border-black/10 dark:border-white/10 mb-2 pb-1 uppercase tracking-widest">{group.letter}</h4>
+                     <ul class="flex flex-col gap-1.5 pt-1">
+                       {group.brands.map((brand) => {
+                          if (!brand.name) return null;
+                          const brandUrl = lang === 'az' ? `/brand/${brand.slug?.current}` : `/${lang}/brand/${brand.slug?.current}`;
+                          return (
+                            <li>
+                              <a href={brandUrl} class="font-sans text-[10px] md:text-[11px] tracking-tight text-[#31251c] dark:text-[#E6D5C3] hover:text-[#D97706] dark:hover:text-[#D97706] transition-colors duration-300 block leading-tight">
+                                {brand.name}
+                              </a>
+                            </li>
+                          );
+                       })}
+                     </ul>
+                   </div>
+                 ))}
+               </div>
+             </div>
+           </div>
+         ) : (
+           <a href={link} class="hover:opacity-60 transition-opacity flex items-center h-full duration-300 m-0 leading-none whitespace-nowrap">
+             {item.itemName}
+           </a>
+         );
+      })}
+    </nav>
+
+    <!-- Utility Icons (Exact same vertical level, Far Right) -->
+    <div class="w-full md:w-48 flex items-center justify-center md:justify-end gap-6 z-[100] h-full">
+      <!-- Language Switcher -->
+      <div class="relative group flex items-center">
+        <button class="opacity-80 hover:opacity-100 transition-opacity duration-500 font-sans text-[10px] md:text-[11px] uppercase tracking-widest relative group-hover:text-[#8a6e56] dark:group-hover:text-white">
+          <span id="current-lang">{lang}</span>
+        </button>
+        <div class="absolute top-[calc(100%+8px)] right-1/2 transform translate-x-1/2 lg:translate-x-0 lg:right-0 w-20 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-500 shadow-lg bg-white dark:bg-[#111] border border-[#eaeaea] dark:border-white/5 z-[150] overflow-hidden font-sans tracking-widest uppercase text-black dark:text-[#E6D5C3]">
+          <button data-lang="en" class="w-full text-center lg:text-left px-5 py-3 text-[10px] transition-colors duration-500 opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 border-b border-[#eaeaea] dark:border-white/5">EN</button>
+          <button data-lang="az" class="w-full text-center lg:text-left px-5 py-3 text-[10px] transition-colors duration-500 opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 border-b border-[#eaeaea] dark:border-white/5">AZ</button>
+          <button data-lang="ru" class="w-full text-center lg:text-left px-5 py-3 text-[10px] transition-colors duration-500 opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5">RU</button>
+        </div>
+      </div>
+      
+      <!-- Theme Toggle -->
+      <div class="flex items-center opacity-80 hover:opacity-100 transition-opacity duration-500 scale-90">
+        <ThemeToggle />
+      </div>
+    </div>
+    
+  </div>
+
+<script>
+  // Language Switcher mapping
+  const langButtons = document.querySelectorAll('header [data-lang]');
+  langButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const newLang = btn.getAttribute('data-lang');
+      let path = window.location.pathname;
+      if (path.startsWith('/ru/') || path === '/ru') {
+        path = path.replace(/^\/ru/, '');
+      } else if (path.startsWith('/en/') || path === '/en') {
+        path = path.replace(/^\/en/, '');
+      }
+      if (path === '') path = '/';
+      
+      if (newLang === 'az') {
+        window.location.href = path;
+      } else {
+        window.location.href = `/${newLang}${path === '/' ? '' : path}`;
+      }
+    });
+  });
+</script>
