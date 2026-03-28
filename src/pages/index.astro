@@ -48,67 +48,6 @@ import HeroSlider from '../components/HeroSlider.astro';
   </section>
 
   <!-- ═══════════════════════════════════════════
-       SECTION 3: FIND YOUR SCENT — Category Cards
-       ═══════════════════════════════════════════ -->
-  <section id="find-your-scent" class="section-luxury">
-    <div class="max-w-screen-xl mx-auto">
-      <h2 class="text-3xl md:text-4xl lg:text-5xl font-normal tracking-widest uppercase text-center mb-6">
-        {t('home.findScent')}
-      </h2>
-      <div class="section-divider"></div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
-        <!-- Card 1: {t('home.mysteriousOud')} -->
-        <div class="scent-card group">
-          <div class="scent-card-icon">
-            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 48 48" stroke-width="1">
-              <path d="M24 4 C20 12, 12 16, 12 28 C12 36, 17 44, 24 44 C31 44, 36 36, 36 28 C36 16, 28 12, 24 4Z" stroke-linecap="round"/>
-              <path d="M20 30 Q24 24, 28 30" stroke-linecap="round" opacity="0.5"/>
-              <line x1="24" y1="28" x2="24" y2="36" opacity="0.3"/>
-            </svg>
-          </div>
-          <h3 class="scent-card-title">{t('home.mysteriousOud')}</h3>
-          <p class="scent-card-desc">{t('home.oudDesc')}</p>
-          <a href="#collection" class="btn-theme">{t('home.explore')}</a>
-        </div>
-
-        <!-- Card 2: {t('home.warmAmber')} -->
-        <div class="scent-card group">
-          <div class="scent-card-icon">
-            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 48 48" stroke-width="1">
-              <circle cx="24" cy="24" r="14" stroke-linecap="round"/>
-              <circle cx="24" cy="24" r="8" opacity="0.5" stroke-linecap="round"/>
-              <circle cx="24" cy="24" r="3" opacity="0.3" stroke-linecap="round"/>
-              <line x1="24" y1="2" x2="24" y2="10" opacity="0.4"/>
-              <line x1="24" y1="38" x2="24" y2="46" opacity="0.4"/>
-              <line x1="2" y1="24" x2="10" y2="24" opacity="0.4"/>
-              <line x1="38" y1="24" x2="46" y2="24" opacity="0.4"/>
-            </svg>
-          </div>
-          <h3 class="scent-card-title">{t('home.warmAmber')}</h3>
-          <p class="scent-card-desc">{t('home.amberDesc')}</p>
-          <a href="#collection" class="btn-theme">{t('home.explore')}</a>
-        </div>
-
-        <!-- Card 3: {t('home.freshSpices')} -->
-        <div class="scent-card group">
-          <div class="scent-card-icon">
-            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 48 48" stroke-width="1">
-              <path d="M16 8 L24 4 L32 8 L32 20 Q28 28 24 32 Q20 28 16 20Z" stroke-linecap="round"/>
-              <path d="M18 36 Q24 40 30 36" stroke-linecap="round" opacity="0.5"/>
-              <line x1="24" y1="32" x2="24" y2="44" opacity="0.3"/>
-              <line x1="20" y1="44" x2="28" y2="44" opacity="0.3"/>
-            </svg>
-          </div>
-          <h3 class="scent-card-title">{t('home.freshSpices')}</h3>
-          <p class="scent-card-desc">{t('home.spiceDesc')}</p>
-          <a href="#collection" class="btn-theme">{t('home.explore')}</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
        SECTION 4: BESTSELLERS — Product Grid
        ═══════════════════════════════════════════ -->
   <section id="collection" class="section-luxury">

@@ -90,38 +90,6 @@ const uniqueAccords = Array.from(allAccordsMap.values()).sort((a, b) =>
   </section>
 
   <!-- ═══════════════════════════════════════════
-       SECTION 3: DISCOVER YOUR SCENT — Editorial CTA
-       ═══════════════════════════════════════════ -->
-  <section id="scent-discovery" class="py-32 md:py-48 bg-black relative overflow-hidden text-center group">
-    <!-- Ambient Background Effects -->
-    <div class="absolute inset-0 bg-gradient-to-b from-[#111] to-black opacity-80 transition-all duration-1000 group-hover:scale-105"></div>
-    <div class="absolute inset-0 bg-[#D97706]/5 mix-blend-color-dodge opacity-30 animate-pulse transition-opacity duration-1000"></div>
-    
-    <div class="max-w-screen-xl mx-auto px-6 relative z-10 flex flex-col items-center">
-      <div class="w-16 h-px bg-[#D97706] mb-12 opacity-40"></div>
-      
-      <h2 class="text-4xl md:text-7xl font-serif tracking-[0.25em] uppercase text-white mb-8 leading-tight drop-shadow-2xl">
-        {t('home.findScent')}
-      </h2>
-      
-      <p class="max-w-xl mx-auto mb-16 font-sans font-light tracking-[0.2em] text-gray-400 text-[10px] md:text-xs leading-relaxed uppercase opacity-80">
-        Experience a personalized journey through our unique olfactory library. Select the notes that inspire you and discover your perfect match.
-      </p>
-      
-      <div class="flex flex-col md:row items-center gap-12">
-        <a 
-          href={`/${lang}/catalog?scent-finder=true`} 
-          class="inline-block border border-white/20 px-16 py-6 text-[10px] md:text-xs tracking-[0.4em] uppercase text-white hover:bg-white hover:text-black transition-all duration-700 rounded-sm hover:scale-105 active:scale-95 shadow-xl"
-        >
-          Explore the Library
-        </a>
-      </div>
-      
-      <div class="w-16 h-px bg-[#D97706] mt-20 opacity-20"></div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
        SECTION 4: BESTSELLERS — Product Grid
        ═══════════════════════════════════════════ -->
   <section id="collection" class="section-luxury">

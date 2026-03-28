@@ -326,12 +326,12 @@
   .product-title {
     font-family: 'Palatino Linotype', Palatino, Palladio, serif;
     color: var(--text);
-    @apply text-sm font-normal tracking-widest uppercase py-4 px-4 text-center transition-colors duration-700;
+    @apply text-sm font-semibold tracking-widest uppercase py-4 px-4 text-center transition-colors duration-700;
   }
 
   .product-price {
-    color: var(--accent);
-    @apply text-xs text-center pb-4 font-bold transition-colors duration-700;
+    color: #d4af37;
+    @apply text-sm text-center pb-4 font-bold transition-colors duration-700;
   }
 
   /* ══════════════════════════════════════════════
