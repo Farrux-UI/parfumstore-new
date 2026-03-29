@@ -1,7 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { sanityClient } from '../../lib/sanity';
-import imageUrlBuilder from '@sanity/image-url';
+import { sanityClient, urlFor } from '../../lib/sanity';
 import { useTranslations } from '../../utils/i18n';
 
 export async function getStaticPaths() {
@@ -14,12 +13,6 @@ export async function getStaticPaths() {
 
 const { lang } = Astro.params;
 const t = useTranslations(lang);
-
-const builder = imageUrlBuilder(sanityClient);
-function urlFor(source) {
-  if (!source) return '';
-  return builder.image(source);
-}
 
 // Build-time fetch for Brands
 let brandsData = [];
@@ -87,8 +80,8 @@ const groupedBrands = brandsData.reduce((acc, b) => {
              </div>
            </div>
 
-           <!-- Original Alphabetical Brand Directory -->
-           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-12 animate-fade-in">
+           <!-- Alphabetical Brand Directory - 4 cols desktop, 2 cols mobile -->
+           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10 animate-fade-in">
               {groupedBrands.map((group) => (
                  <div class="flex flex-col group/brand">
                    <h2 class="text-xl md:text-2xl font-serif text-[#8a0303] dark:text-[#d4af37] border-b border-black/10 dark:border-white/10 mb-5 pb-2 uppercase tracking-widest pl-0.5 group-hover/brand:pl-2 transition-all duration-700">{group.letter}</h2>

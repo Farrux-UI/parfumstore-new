@@ -1,8 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { useTranslations } from '../../utils/i18n';
-import { sanityClient } from '../../lib/sanity';
-import imageUrlBuilder from '@sanity/image-url';
+import { sanityClient, urlFor } from '../../lib/sanity';
 
 export async function getStaticPaths() {
   const brands = await sanityClient.fetch('*[_type == "brand" && defined(slug.current)] { name, slug }');
@@ -14,11 +13,6 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const lang = 'az';
 const t = useTranslations(lang);
-
-const builder = imageUrlBuilder(sanityClient);
-function urlFor(source) {
-  return builder.image(source);
-}
 
 const query = `
   *[_type == "brand" && slug.current == $slug][0]{
@@ -74,7 +68,7 @@ const PER_PAGE = 15;
         <span>/</span>
         <em>{name}</em>
       </nav>
-      {logo && <img src={urlFor(logo).width(200).url()} alt={name} class="studio-logo" />}
+      {logo && <img src={urlFor(logo, 200, 75).url()} alt={name} class="studio-logo" loading="lazy" />}
       <h1 class="studio-brand">{name}</h1>
     </header>
 
@@ -99,14 +93,14 @@ const PER_PAGE = 15;
               {p.logo ? (
                 <>
                   <img
-                    src={urlFor(p.logo).width(500).url()}
+                    src={urlFor(p.logo, 400, 75).url()}
                     alt={p.name}
                     class="product-img bottle-main"
                     loading="lazy"
                   />
                   {p.imageHover && (
                     <img
-                      src={urlFor(p.imageHover).width(500).url()}
+                      src={urlFor(p.imageHover, 400, 75).url()}
                       alt={`${p.name} Hover`}
                       class="product-img bottle-hover"
                       loading="lazy"
@@ -250,8 +244,8 @@ const PER_PAGE = 15;
 
   .studio-grid {
     display: grid;
-    /* CSS Grid: 5 columns desktop */
-    grid-template-columns: repeat(5, 1fr);
+    /* CSS Grid: 4 columns desktop */
+    grid-template-columns: repeat(4, 1fr);
     gap: 3rem 1.5rem;
   }
 
@@ -359,7 +353,7 @@ const PER_PAGE = 15;
   .brand-product-card:hover .product-name { color: var(--accent); }
 
   .product-price {
-    font: 12px/1.2 sans-serif;
+    font: 16px/1.2 sans-serif;
     font-weight: 700;
     letter-spacing: .08em;
     color: #d4af37;
@@ -392,13 +386,14 @@ const PER_PAGE = 15;
   @media (max-width: 479px) {
     .studio-hdr { padding: 4rem 1rem 2rem; }
     .studio-brand { font-size: 1.1rem; }
-    .studio-main { padding: 0 1rem 3rem; }
+    .studio-main { padding: 0 16px 3rem; }
     
-    /* 2 columns mobile */
-    .studio-grid { grid-template-columns: repeat(2, 1fr); gap: 2rem 0.5rem; }
+    /* 2 columns mobile - strict 16px padding, balanced gap */
+    .studio-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem 12px; }
     
-    .product-name { font-size: 10px; }
-    .product-price { font-size: 9px; }
+    /* Cinematic mobile typography */
+    .product-name { font-size: 14px; font-weight: 700; line-height: 1.2; }
+    .product-price { font-size: 24px; font-weight: 800; }
   }
 
   @media (min-width: 480px) and (max-width: 767px) {

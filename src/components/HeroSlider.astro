@@ -1,40 +1,29 @@
 ---
-import { sanityClient } from '../lib/sanity';
-import imageUrlBuilder from '@sanity/image-url';
+import { sanityClient, urlFor } from '../lib/sanity';
 
 import { useTranslations } from '../utils/i18n';
 
 const lang = Astro.currentLocale || 'az';
 const t = useTranslations(lang);
 
-const builder = imageUrlBuilder(sanityClient);
-function urlFor(source) {
-  return builder.image(source);
-}
-
 let sliderDocs = [];
 try {
-  // Fetch ALL heroSlider documents natively as requested (removes [0] limit)
   sliderDocs = await sanityClient.fetch('*[_type == "heroSlider"]');
 } catch (error) {
   console.error("Failed to fetch heroSlider:", error);
 }
 
-// FlatMap all slides across any documents they published into a single array
-let slides = sliderDocs.flatMap(doc => doc.slides || []);
+const slides = sliderDocs.flatMap(doc => doc.slides || []);
 
-// Fallback slides if Sanity data is fully empty
 if (slides.length === 0) {
-  slides = [
-    {
-      title: t('hero.title'),
-      subtitle: t('hero.subtitle'),
-      buttonText: t('hero.btn'),
-      buttonUrl: "/catalog?brand=christian-richard",
-      desktopImage: null,
-      mobileImage: null
-    }
-  ];
+  slides.push({
+    title: t('hero.title'),
+    subtitle: t('hero.subtitle'),
+    buttonText: t('hero.btn'),
+    buttonUrl: "/catalog?brand=christian-richard",
+    desktopImage: null,
+    mobileImage: null
+  });
 }
 ---
 
@@ -81,11 +70,11 @@ if (slides.length === 0) {
           <!-- Background Images -->
           <picture class="absolute inset-0 w-full h-full">
             {slide.mobileImage && (
-              <source media="(max-width: 768px)" srcset={urlFor(slide.mobileImage).width(800).url()} />
+              <source media="(max-width: 768px)" srcset={urlFor(slide.mobileImage, 800, 75).url()} />
             )}
             {slide.desktopImage ? (
                <img 
-                 src={urlFor(slide.desktopImage).width(1920).url()} 
+                 src={urlFor(slide.desktopImage, 1920, 75).url()} 
                  alt={slide.title || "Hero Background"} 
                  class="w-full h-full object-cover object-bottom"
                />

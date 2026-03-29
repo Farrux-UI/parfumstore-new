@@ -1,13 +1,8 @@
 ---
 import '../styles/global.css';
-import { sanityClient } from '../lib/sanity';
-import imageUrlBuilder from '@sanity/image-url';
+import { sanityClient, urlFor } from '../lib/sanity';
 import Header from '../components/Header.astro';
-
-const builder = imageUrlBuilder(sanityClient);
-function urlFor(source) {
-  return builder.image(source);
-}
+import WhatsAppFAB from '../components/WhatsAppFAB.astro';
 
 interface Props {
   title?: string;
@@ -21,6 +16,20 @@ try {
   brandsData = await sanityClient.fetch('*[_type == "brand"] { name, letter, logo } | order(name asc)');
 } catch (error) {
   console.error("Failed to fetch brands from Sanity:", error);
+}
+
+// Fetch manager phone numbers from About Us
+let managerPhones = { manager1: '', manager2: '' };
+try {
+  const aboutData = await sanityClient.fetch('*[_type == "aboutPage"][0] { manager1Phone, manager2Phone }');
+  if (aboutData) {
+    managerPhones = {
+      manager1: aboutData.manager1Phone || '',
+      manager2: aboutData.manager2Phone || ''
+    };
+  }
+} catch (error) {
+  console.error("Failed to fetch manager phones:", error);
 }
 
 // Group brands by their letter field from Sanity
@@ -76,9 +85,9 @@ const brands = brandsData.reduce((acc, brand) => {
     </script>
   </head>
   <body class="text-black dark:text-white transition-colors duration-700 pt-0">
-    <!-- Global Parallax Background -->
-    <div class="fixed inset-0 z-[-10] bg-[url('/background.png')] bg-cover bg-center bg-no-repeat transition-all duration-700 dark:brightness-[0.3] dark:contrast-[1.2]"></div>
-    <div class="fixed inset-0 z-[-9] bg-[#FDFBF7]/80 dark:bg-[#0a0a0a]/80 transition-all duration-700 pointer-events-none"></div>
+    <!-- Global Background - Lightweight CSS Gradient (replaces 1.21MB PNG) -->
+    <div class="fixed inset-0 z-[-10] bg-gradient-to-br from-[#f8f5f0] via-[#f0ebe3] to-[#e8e0d5] dark:from-[#1a1a1a] dark:via-[#141414] dark:to-[#0a0a0a] transition-all duration-700"></div>
+    <div class="fixed inset-0 z-[-9] bg-[#FDFBF7]/90 dark:bg-[#0a0a0a]/90 transition-all duration-700 pointer-events-none"></div>
 
     <Header />
 
@@ -86,6 +95,8 @@ const brands = brandsData.reduce((acc, brand) => {
     <main>
       <slot />
     </main>
+
+    <WhatsAppFAB manager1={managerPhones.manager1} manager2={managerPhones.manager2} />
 
     <script>
       // Header background effect on scroll
